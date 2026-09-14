@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huruf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #faf9f5;
+    --surface: #ffffff;
+    --border: #e4e2da;
+    --ink: #1b1a17;
+    --ink-soft: #85817c;
+    --ink-faint: #b3afa5;
+
+    --grp-a: #b81e1e; --grp-b: #18953d; --grp-c: #8f24db; --grp-d: #9e8d1a;
+    --grp-e: #0e94af; --grp-f: #b81e71; --grp-g: #379518; --grp-h: #2c24db;
+    --grp-i: #b8521e; --grp-j: #189566; --grp-k: #cc24db; --grp-l: #7b9518;
+    --grp-m: #0e5eaf; --grp-n: #b81e3e; --grp-o: #189523; --grp-p: #6924db;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #161513;
+      --surface: #1d1c19;
+      --border: #34322c;
+      --ink: #f3f1ea;
+      --ink-soft: #a39e90;
+      --ink-faint: #6b6759;
+
+      --grp-a: #e31414; --grp-b: #0c8f6f; --grp-c: #a136ed; --grp-d: #8a7b0c;
+      --grp-e: #0e88a1; --grp-f: #d9137e; --grp-g: #2e930d; --grp-h: #6761f1;
+      --grp-i: #c84f11; --grp-j: #0d915f; --grp-k: #bf12cf; --grp-l: #6d860c;
+      --grp-m: #137ae0; --grp-n: #e0143e; --grp-o: #0d924f; --grp-p: #8b4df0;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #161513;
+    --surface: #1d1c19;
+    --border: #34322c;
+    --ink: #f3f1ea;
+    --ink-soft: #a39e90;
+    --ink-faint: #6b6759;
+
+    --grp-a: #e31414; --grp-b: #0c8f6f; --grp-c: #a136ed; --grp-d: #8a7b0c;
+    --grp-e: #0e88a1; --grp-f: #d9137e; --grp-g: #2e930d; --grp-h: #6761f1;
+    --grp-i: #c84f11; --grp-j: #0d915f; --grp-k: #bf12cf; --grp-l: #6d860c;
+    --grp-m: #137ae0; --grp-n: #e0143e; --grp-o: #0d924f; --grp-p: #8b4df0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-inline: max(16px, calc((100% - 900px) / 2));
+    padding-block: 32px 56px;
+  }
+
+  .page { max-width: 900px; margin: 0 auto; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+  }
+
+  .tile {
+    position: relative;
+    aspect-ratio: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .letter-btn {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border-radius: 10px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .letter-btn:hover { background: color-mix(in srgb, var(--tile-color) 8%, transparent); }
+  .letter-btn:focus-visible {
+    outline: 2px solid var(--tile-color);
+    outline-offset: 2px;
+  }
+
+  .glyph {
+    font-family: "Noto Naskh Arabic", serif;
+    font-size: clamp(4rem, 12vw, 6.8rem);
+    line-height: 1;
+    color: var(--tile-color);
+  }
+
+  .play-btn {
+    all: unset;
+    position: absolute;
+    inset-block-end: 5px;
+    inset-inline-end: 5px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--ink-faint);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .play-btn:hover, .play-btn:focus-visible { color: var(--tile-color); background: color-mix(in srgb, var(--tile-color) 12%, transparent); }
+  .play-btn:focus-visible { outline: 2px solid var(--tile-color); outline-offset: 1px; }
+  .play-btn svg { width: 15px; height: 15px; }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(in srgb, var(--ink) 45%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+  .modal-overlay[hidden] { display: none !important; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 24px 28px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+  }
+
+  .modal-close {
+    all: unset;
+    position: absolute;
+    inset-block-start: 10px;
+    inset-inline-end: 12px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+  .modal-close:hover, .modal-close:focus-visible { background: var(--bg); color: var(--ink); }
+
+  .modal-lead {
+    font-family: "Noto Naskh Arabic", serif;
+    font-size: clamp(3rem, 14vw, 4.2rem);
+    text-align: center;
+    margin-block-end: 22px;
+    color: var(--modal-color);
+  }
+
+  .modal-forms {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    direction: rtl;
+  }
+
+  .form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding-block: 16px;
+    background: var(--bg);
+    border-radius: 12px;
+  }
+
+  .form-label {
+    font-family: "Work Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .form-glyph {
+    font-family: "Noto Naskh Arabic", serif;
+    font-size: clamp(2.1rem, 9vw, 2.8rem);
+    color: var(--modal-color);
+    line-height: 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .letter-btn, .play-btn, .modal-close { transition: background-color 120ms ease, color 120ms ease; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="grid" id="grid" dir="rtl"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalLead">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    <div class="modal-lead" id="modalLead" lang="ar"></div>
+    <div class="modal-forms">
+      <div class="form-item">
+        <span class="form-glyph" id="formBeginning" lang="ar"></span>
+        <span class="form-label">Beginning</span>
+      </div>
+      <div class="form-item">
+        <span class="form-glyph" id="formMiddle" lang="ar"></span>
+        <span class="form-label">Middle</span>
+      </div>
+      <div class="form-item">
+        <span class="form-glyph" id="formEnd" lang="ar"></span>
+        <span class="form-label">End</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var ZWJ = "‍";
+
+  var LETTERS = [
+    { ch: "ا", grp: "a" }, { ch: "ب", grp: "b" }, { ch: "ت", grp: "b" }, { ch: "ث", grp: "b" },
+    { ch: "ج", grp: "c" }, { ch: "ح", grp: "c" }, { ch: "خ", grp: "c" },
+    { ch: "د", grp: "d" }, { ch: "ذ", grp: "d" },
+    { ch: "ر", grp: "e" }, { ch: "ز", grp: "e" },
+    { ch: "س", grp: "f" }, { ch: "ش", grp: "f" },
+    { ch: "ص", grp: "g" }, { ch: "ض", grp: "g" },
+    { ch: "ط", grp: "h" }, { ch: "ظ", grp: "h" },
+    { ch: "ع", grp: "i" }, { ch: "غ", grp: "i" },
+    { ch: "ف", grp: "j" }, { ch: "ق", grp: "j" },
+    { ch: "ك", grp: "k" },
+    { ch: "ل", grp: "l" },
+    { ch: "م", grp: "m" },
+    { ch: "ن", grp: "b" },
+    { ch: "ه", grp: "n" },
+    { ch: "و", grp: "o" },
+    { ch: "ي", grp: "p" }
+  ];
+
+  var grid = document.getElementById("grid");
+  var overlay = document.getElementById("modalOverlay");
+  var modal = overlay.querySelector(".modal");
+  var modalLead = document.getElementById("modalLead");
+  var formBeginning = document.getElementById("formBeginning");
+  var formMiddle = document.getElementById("formMiddle");
+  var formEnd = document.getElementById("formEnd");
+  var closeBtn = document.getElementById("modalClose");
+  var lastFocused = null;
+
+  function playSpeakerIcon() {
+    return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M3 9.5v5h3.6l5 4.3V5.2l-5 4.3H3z" fill="currentColor"/>' +
+      '<path d="M15.8 8.3a5.2 5.2 0 0 1 0 7.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<path d="M18.4 5.8a9 9 0 0 1 0 12.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      "</svg>";
+  }
+
+  LETTERS.forEach(function (item) {
+    var tile = document.createElement("div");
+    tile.className = "tile";
+    tile.style.setProperty("--tile-color", "var(--grp-" + item.grp + ")");
+
+    var letterBtn = document.createElement("button");
+    letterBtn.className = "letter-btn";
+    letterBtn.setAttribute("aria-label", "Show the written forms of " + item.ch);
+    letterBtn.innerHTML = '<span class="glyph" lang="ar">' + item.ch + "</span>";
+    letterBtn.addEventListener("click", function () {
+      openModal(item, letterBtn);
+    });
+
+    var playBtn = document.createElement("button");
+    playBtn.className = "play-btn";
+    playBtn.setAttribute("aria-label", "Play the sound of " + item.ch);
+    playBtn.innerHTML = playSpeakerIcon();
+    playBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      speak(item.ch);
+    });
+
+    tile.appendChild(letterBtn);
+    tile.appendChild(playBtn);
+    grid.appendChild(tile);
+  });
+
+  function openModal(item, trigger) {
+    lastFocused = trigger;
+    modal.style.setProperty("--modal-color", "var(--grp-" + item.grp + ")");
+    modalLead.textContent = item.ch;
+    formBeginning.textContent = item.ch + ZWJ;
+    formMiddle.textContent = ZWJ + item.ch + ZWJ;
+    formEnd.textContent = ZWJ + item.ch;
+    overlay.hidden = false;
+    closeBtn.focus();
+  }
+
+  function closeModal() {
+    overlay.hidden = true;
+    if (lastFocused) lastFocused.focus();
+  }
+
+  closeBtn.addEventListener("click", closeModal);
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeModal();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !overlay.hidden) closeModal();
+  });
+
+  var cachedVoices = [];
+  function refreshVoices() {
+    if ("speechSynthesis" in window) cachedVoices = window.speechSynthesis.getVoices();
+  }
+  if ("speechSynthesis" in window) {
+    refreshVoices();
+    window.speechSynthesis.onvoiceschanged = refreshVoices;
+  }
+
+  function speak(letter) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    var utter = new SpeechSynthesisUtterance(letter);
+    utter.lang = "ar-SA";
+    utter.rate = 0.7;
+    var arVoice = cachedVoices.find(function (v) { return v.lang && v.lang.toLowerCase().indexOf("ar") === 0; });
+    if (arVoice) utter.voice = arVoice;
+    window.speechSynthesis.speak(utter);
+  }
+})();
+</script>
+</body>
+</html>

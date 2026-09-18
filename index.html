@@ -445,6 +445,64 @@
     next();
   }
 
+  // Arabic display fonts (Noto Naskh Arabic included) reserve a lot of
+  // vertical space above most letters for tall ascenders/diacritics that
+  // ordinary letters don't use, so centering by CSS line-height leaves most
+  // glyphs looking low (and slightly off horizontally). This measures the
+  // actual drawn ink of a glyph on an offscreen canvas and nudges the
+  // element with a transform so its visual ink — not its font box — sits
+  // centered in its container.
+  var inkCanvas = null;
+  function centerGlyphInk(el) {
+    var text = el.textContent;
+    if (!text) {
+      el.style.transform = "";
+      return;
+    }
+    var cs = getComputedStyle(el);
+    var fontSizePx = parseFloat(cs.fontSize) || 16;
+    var size = Math.max(60, Math.ceil(fontSizePx * 3));
+    if (!inkCanvas) inkCanvas = document.createElement("canvas");
+    inkCanvas.width = size;
+    inkCanvas.height = size;
+    var ctx = inkCanvas.getContext("2d");
+    ctx.clearRect(0, 0, size, size);
+    ctx.font = cs.fontStyle + " " + cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#000";
+    ctx.fillText(text, size / 2, size / 2);
+    var data;
+    try {
+      data = ctx.getImageData(0, 0, size, size).data;
+    } catch (e) {
+      return;
+    }
+    var minX = size, maxX = -1, minY = size, maxY = -1;
+    for (var y = 0; y < size; y++) {
+      var rowBase = y * size * 4;
+      for (var x = 0; x < size; x++) {
+        if (data[rowBase + x * 4 + 3] > 10) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) {
+      el.style.transform = "";
+      return;
+    }
+    var dx = size / 2 - (minX + maxX) / 2;
+    var dy = size / 2 - (minY + maxY) / 2;
+    el.style.transform = "translate(" + dx.toFixed(1) + "px, " + dy.toFixed(1) + "px)";
+  }
+
+  function centerAllGlyphs() {
+    document.querySelectorAll(".glyph, .modal-lead, .form-glyph").forEach(centerGlyphInk);
+  }
+
   function triggerWrite(tile, item) {
     if (tile.dataset.writing === "1") return;
     var glyph = tile.querySelector(".glyph");
@@ -505,6 +563,16 @@
     grid.appendChild(tile);
   });
 
+  centerAllGlyphs();
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(centerAllGlyphs);
+  }
+  var resizeTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(centerAllGlyphs, 150);
+  });
+
   function openModal(item, trigger) {
     lastFocused = trigger;
     modal.style.setProperty("--modal-color", "var(--grp-" + item.grp + ")");
@@ -514,6 +582,10 @@
     formEnd.textContent = ZWJ + item.ch;
     overlay.hidden = false;
     closeBtn.focus();
+    centerGlyphInk(modalLead);
+    centerGlyphInk(formBeginning);
+    centerGlyphInk(formMiddle);
+    centerGlyphInk(formEnd);
   }
 
   function closeModal() {
